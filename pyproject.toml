@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ngi-calculations"
-version = "0.1.7"
+version = "0.1.9"
 description = "CPT correlations including commonly used empirical correlations"
 authors = [
     "Julien Hericher <Julien.Hericher@ngi.no>", 
