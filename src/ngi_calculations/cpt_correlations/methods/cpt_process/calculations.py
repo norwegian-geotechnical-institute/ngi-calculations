@@ -166,7 +166,7 @@ class CPTProcessCalculation:
 
         # Merge the two Dataframes
         # Create a type dictionary for all columns
-        types_dict = {col: np.float64 for col in _df.columns if col != "method_id" and col != depth}
+        types_dict = {col: np.float64 for col in _df.columns if col != self.options.cpt_identifier and col != depth}
         # Add depth type if needed
         types_dict[depth] = np.float64
         # Apply types
