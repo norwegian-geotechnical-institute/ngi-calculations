@@ -8,6 +8,7 @@ from ngi_calculations.cpt_correlations.config import MIN_CPT_ALLOWED_STEP
 from ngi_calculations.cpt_correlations.definitions.geo import GEO
 from ngi_calculations.cpt_correlations.definitions.physics import PhysicParameters as PHY
 from ngi_calculations.cpt_correlations.methods.cpt_process.options import CptProcessOptions
+from ngi_calculations.cpt_correlations.models.cpt_cone import CptCone
 from ngi_calculations.cpt_correlations.models.cpt_raw import RawCPT
 from ngi_calculations.cpt_correlations.models.lab_data import LabData
 from ngi_calculations.cpt_correlations.utils.interpolation import interpolate_missing_values
@@ -30,7 +31,6 @@ class CPTProcessCalculation:
         self.raw_cpt = raw_cpt
         self.lab_data = lab_data
         self.options = options
-        # self.calculate()
 
     @measure("ProcessCPT_Calculation", log_time=False, log_child=False)
     @track_execution
@@ -50,6 +50,7 @@ class CPTProcessCalculation:
         self._differential_pressure()
         self._normalized_differential_pressure()
         self._elevation()
+        self._set_cone_info()
         self._total_cone_resistance()
         self._net_cone_resistance()
         self._normalized_cone_resistance()
@@ -63,7 +64,7 @@ class CPTProcessCalculation:
         self._filter_data()
 
     def _set_initial_data(self):
-        self.data = self.raw_cpt.data[self.raw_cpt.columns.all].copy()
+        self.data = self.raw_cpt.data.copy()
         self.data[GEO.u2_raw.key] = self.data[GEO.u2.key]
         self.data[GEO.depth_raw.key] = self.data[GEO.depth.key]
         self.depth_raw = self.data[GEO.depth.key].values
@@ -164,7 +165,14 @@ class CPTProcessCalculation:
         _df = _df.drop([x for x in lab_cols if x in _df.columns], axis=1)
 
         # Merge the two Dataframes
-        _df.astype(np.float64, copy=False)
+        # Create a type dictionary for all columns
+        types_dict = {col: np.float64 for col in _df.columns if col != "method_id" and col != depth}
+        # Add depth type if needed
+        types_dict[depth] = np.float64
+        # Apply types
+        _df = _df.astype(types_dict)
+
+        # _df.astype(np.float64, copy=False)
         _df = pd.merge(_df, lab_df, on=depth, how="outer")
         _df.sort_values(by=depth, inplace=True)
         _df.set_index(depth, drop=False, inplace=True)
@@ -231,16 +239,36 @@ class CPTProcessCalculation:
         # TODO: Where to make available the self.options.elevation?
         self.data[GEO.elevation.key] = self.options.elevation - self.data[GEO.depth.key]
 
+    def _set_cone_info(self):
+        if self.options.cpt_identifier in self.data.columns:
+            # Create a function to map each identifier to the corresponding cone area ratio value
+            def get_cone_area_ratio(identifier):
+                cone = self.raw_cpt.cone.get(identifier)
+                # Return the numeric cone_area_ratio attribute, not the entire CptCone object
+                return cone.cone_area_ratio if cone else CptCone().cone_area_ratio
+
+            # Apply the function to each row's identifier
+            self.data[GEO.cone_area_ratio.key] = self.data[self.options.cpt_identifier].apply(get_cone_area_ratio)
+        else:
+            # If the identifier column doesn't exist, use the default value
+            self.data[GEO.cone_area_ratio.key] = CptCone().cone_area_ratio
+
+        # Do the same for sleeve_area_ratio
+        if self.options.cpt_identifier in self.data.columns:
+
+            def get_sleeve_area_ratio(identifier):
+                cone = self.raw_cpt.cone.get(identifier)
+                # Return the numeric sleeve_area_ratio attribute, not the entire CptCone object
+                return cone.sleeve_area_ratio if cone else CptCone().sleeve_area_ratio
+
+            self.data[GEO.sleeve_area_ratio.key] = self.data[self.options.cpt_identifier].apply(get_sleeve_area_ratio)
+        else:
+            self.data[GEO.sleeve_area_ratio.key] = CptCone().sleeve_area_ratio
+
     def _total_cone_resistance(self):
-        self.data[GEO.cone_area_ratio.key] = self.raw_cpt.cone.cone_area_ratio
-        self.data[GEO.sleeve_area_ratio.key] = self.raw_cpt.cone.sleeve_area_ratio
         self.data[GEO.qt.key] = (
             1000 * self.data[GEO.qc.key] + self.data[GEO.u2.key] * (1 - self.data[GEO.cone_area_ratio.key])
         ) / 1000
-        # self.df[GEO.qt.key] = (
-        #     1000 * self.df[GEO.qc.key]
-        #     + self.df[GEO.u2.key] * (1 - self.df[GEO.cone_area_ratio.key]) * self.df[GEO.sleeve_area_ratio.key]
-        # ) / 1000
 
     def _net_cone_resistance(self):
         self.data[GEO.qn.key] = self.data[GEO.qt.key] - self.data[GEO.sigVtTotal.key] / 1000

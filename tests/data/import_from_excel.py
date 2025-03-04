@@ -1,5 +1,6 @@
 import pandas as pd
 from openpyxl.utils import column_index_from_string
+
 from tests.data.excel_import_model import ExcelDataConfig
 
 
@@ -35,6 +36,37 @@ def rename_excel_df_columns(df: pd.DataFrame, columns_mapping: dict[str, str | l
                 df_copy.rename(columns={c: new_names}, inplace=True)
         else:
             df_copy.rename(columns={c: f"_skip{i}"}, inplace=True)
+    return df_copy
+
+
+# Function to identify columns with numeric strings and convert them to float
+def convert_numeric_string_columns(df):
+    # Create a copy to avoid modifying the original dataframe
+    df_copy = df.copy()
+
+    # Loop through all columns in the dataframe
+    for col in df_copy.columns:
+        # Check if the column has string dtype
+        if pd.api.types.is_string_dtype(df_copy[col]):
+            # Try to convert the column to numeric
+            try:
+                # Convert string to numeric (will handle both int and float strings)
+                numeric_col = pd.to_numeric(df_copy[col], errors="coerce")
+
+                # If conversion worked without introducing new NaNs
+                if not numeric_col.isna().all() and numeric_col.isna().sum() == df_copy[col].isna().sum():
+                    # Explicitly cast to float64 type
+                    df_copy[col] = numeric_col.astype("float64")
+                    # print(f"Converted column '{col}' to float")
+            except:
+                continue
+
+    # Now check for any integer columns and convert them to float as well
+    for col in df_copy.columns:
+        if pd.api.types.is_integer_dtype(df_copy[col]):
+            df_copy[col] = df_copy[col].astype("float64")
+            # print(f"Converted integer column '{col}' to float")
+
     return df_copy
 
 
@@ -83,7 +115,7 @@ def import_excel_to_dataframe(
         if config.column_mapping:
             df = rename_excel_df_columns(df, config.column_mapping)
 
-        df = df.astype(float)
+        df = convert_numeric_string_columns(df)
         return df
     except Exception as e:
         print(f"Error occurred while importing data: {e}")
