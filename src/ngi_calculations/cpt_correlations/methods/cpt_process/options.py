@@ -9,3 +9,4 @@ class CptProcessOptions(BaseModel):
     adjust_depth_tilt: bool = False  # Adjust depth due to tilt
     compensate_atm_pressure: bool = False
     interpolation_mode: Literal["linear", "padding"] = "linear"
+    cpt_identifier: str = "method_id"

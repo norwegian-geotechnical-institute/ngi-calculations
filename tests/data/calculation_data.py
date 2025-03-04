@@ -4,6 +4,7 @@ from enum import Enum
 
 import pandas as pd
 
+from ngi_calculations.cpt_correlations.models.cpt_cone import CptCone
 from tests.data.excel_data_column_mapping import (
     CptProcessedColumns,
     CptRawColumns,
@@ -83,8 +84,7 @@ class ExcelFileConfig:
     lab_data: ExcelDataConfig
     raw_cpt: ExcelDataConfig
     processed_cpt: ExcelDataConfig
-    # interpretation: ExcelInterpretation
-    cone_area_ratio: float
+    cone: dict[str, CptCone]
 
 
 @dataclass
@@ -104,7 +104,7 @@ class Files2(Enum):
         raw_cpt=ExcelDataConfig(
             sheetname="cpt_raw",
             start_column="A",
-            end_column="H",
+            end_column="I",
             header_row=2,
             data_start_row=4,
             data_end_row=439,
@@ -122,13 +122,17 @@ class Files2(Enum):
         processed_cpt=ExcelDataConfig(
             sheetname="cpt_processed",
             start_column="A",
-            end_column="AC",
+            end_column="AF",
             header_row=2,
             data_start_row=4,
             data_end_row=439,
             column_mapping=CptProcessedColumns().columns,
         ),
-        cone_area_ratio=0.846,
+        cone={
+            "aaa": CptCone(cone_area_ratio=0.85, sleeve_area_ratio=1.0),
+            "bbb": CptCone(cone_area_ratio=0.92, sleeve_area_ratio=0.9),
+            "ccc": CptCone(cone_area_ratio=0.75, sleeve_area_ratio=0.8),
+        },
     )
 
 
@@ -137,8 +141,7 @@ class ExcelData2:
     lab_data: pd.DataFrame
     raw_cpt: pd.DataFrame
     processed_cpt: pd.DataFrame
-    # interpretation: ExcelInterpretation
-    cone_area_ratio: float
+    cone: dict[str, CptCone]
 
 
 CURRENT_DIR = os.getcwd()
@@ -156,5 +159,5 @@ def get_data_from_excel_calculation_file(file: Files2):
         raw_cpt=cpt_raw_data,
         lab_data=lab_data,
         processed_cpt=cpt_processed_data,
-        cone_area_ratio=settings.cone_area_ratio,
+        cone=settings.cone,
     )

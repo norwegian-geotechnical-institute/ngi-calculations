@@ -34,7 +34,7 @@ class RawCPTColumns(BaseModel):
 class RawCPT(CustomBaseModel):
     data: pd.DataFrame = Field(..., description="Pandas DataFrame containing raw CPT data")
     columns: RawCPTColumns = RawCPTColumns()
-    cone: CptCone = CptCone()
+    cone: dict[str, CptCone] | None = None
 
     @field_validator("data")
     def validate_data(cls, value):
