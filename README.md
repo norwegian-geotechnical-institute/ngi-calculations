@@ -1,5 +1,3 @@
-@ somtehoign
-
 # Introduction
 
 This repository contains various correlations for CPTs.
