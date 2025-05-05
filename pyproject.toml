@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ngi-calculations"
-version = "0.1.9"
+version = "0.1.10"
 description = "CPT correlations including commonly used empirical correlations"
 authors = [
     "Julien Hericher <Julien.Hericher@ngi.no>", 
@@ -9,6 +9,7 @@ authors = [
 readme = "README.md"
 packages = [
     { include = "ngi_calculations", from = "src"},
+    { include = "tests" }
 ]
 
 [tool.poetry.dependencies]

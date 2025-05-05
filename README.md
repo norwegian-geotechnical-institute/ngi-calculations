@@ -4,6 +4,15 @@ This repository contains various correlations for CPTs.
 
 # Getting Started
 
+## Installation
+
+`pip install ngi-calculations`
+
+## Usage
+
+You can find a complete example in:
+`./examples/basic-cpt-process.py`
+
 ## Development
 
 ### Dependencies

@@ -1,5 +1,11 @@
 # Changes
 
+## Version 0.1.10:
+
+**date: 2025-05-05**
+
+- Add example on how to use the library
+
 ## Version 0.1.7:
 
 **date: 2024-09-26**
