@@ -2,6 +2,8 @@
 
 This repository contains various correlations for CPTs.
 
+## Warning: This repository and corresponding python package has been deprecated and will no longer be maintained.
+
 # Getting Started
 
 ## Installation
